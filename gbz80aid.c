@@ -592,7 +592,16 @@ void asm_to_hex(char *str)
 	
 	// Get hex equivalent of instruction
 	char *cur_hex = op2hex(opcode, param, args);
-
+	int hex_value = (int)strtol(cur_hex, NULL, 16);
+	if (cur_offset % 2 == 0 && strlen(cur_hex) / 2 == 1 && (hex_value < 90 || hex_value > 126)) {
+		// Allocate memory for a new string with enough space for the additional byte
+    		cur_hex = realloc(cur_hex, 5 * sizeof(char));
+    		// Shift the string to the right to make space for "00"
+    		memmove(cur_hex + 2, cur_hex, 3);
+    		// Prepend "00" to cur_hex
+    		memcpy(cur_hex, "00", 2);
+	}
+	
 	// Resize hex string to hold additional hex values
 	hex_string = realloc(hex_string, (hex_size += strlen(cur_hex)) * sizeof(char));
 
