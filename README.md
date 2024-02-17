@@ -1,6 +1,5 @@
-8F Helper
-=========
-
+PKMNRBY-code-converter
+======================
 All credit goes to the original author of [8F Helper](https://github.com/KernelEquinox/8F-Helper/releases/) (KernelEquinox)
 and new features will be implemented soon based off code from [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM)
 I've merely added some tweaks and combined tools, most of the work was already done.
