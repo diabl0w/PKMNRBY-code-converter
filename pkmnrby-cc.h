@@ -560,3 +560,15 @@ char *gen2_items[16][16] = {
 unsigned char joy_vals[4] = {8, 4, 2, 1};
 char *joy_high[4] = {"DOWN", "UP", "LEFT", "RIGHT"};
 char *joy_low[4] = {"START", "SELECT", "B", "A"};
+
+#include <stdio.h>
+
+// ANSI color codes
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define BLUE    "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN    "\x1b[36m"
+#define BLACK "\x1b[0m"
+

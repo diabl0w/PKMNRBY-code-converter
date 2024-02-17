@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "gbz80aid.h"
+#include "pkmnrby-cc.h"
 
 
 void usage(char*);
@@ -14,9 +14,10 @@ void ascii2hex(char*, int);
 void jump2addr(char*, int);
 char* op2hex(char*, char*, char*);
 void hex_to_asm(char*, int);
-void asm_to_hex(char*);
-void hex_to_gen(char*, int);
+void asm_to_hex(char*, int);
+void hex_to_item(char*);
 void hex_to_joy(char*);
+void get_file_data(char*, char*, int);
 
 
 // Struct for holding label information
@@ -56,8 +57,10 @@ char show_warnings = 1;
 
 int main(int argc, char* argv[])
 {
-	char *format = 0;
-	char *input, *filename;
+	char *output = 0;
+	char *input = 0;
+	int mode = 0;
+	char *data, *filename;
 	char file_mode = 0;
 
 	// Show help
@@ -76,18 +79,39 @@ int main(int argc, char* argv[])
 			if(i == argc)
 			{
 				// The user supplied a "-f" option but no file to read from.
-				printf("Error : a file to read from is expected after \"-f\" !\n");
+				printf(RED "Error : a file to read from is expected after \"-f\" !\n" BLACK);
 				exit(1);
 			}
 		}
 
-		else if (!strcmp(argv[i], "-o"))
+		else if (!strcmp(argv[i], "-i"))
 		{
-			format = argv[++i];
+			input = argv[++i];
 			// I'm just bounds checkin' ~
 			if(i == argc)
 			{
-				printf("Error : \"-o\" expects a format but nothing was found !\n");
+				printf(RED "Error : \"-i\" expects a format but nothing was found !\n" BLACK);
+				exit(1);
+			}
+		}
+		
+		else if (!strcmp(argv[i], "-o"))
+		{
+			output = argv[++i];
+			// I'm just bounds checkin' ~
+			if(i == argc)
+			{
+				printf(RED "Error : \"-o\" expects a format but nothing was found !\n" BLACK);
+				exit(1);
+			}
+		}
+
+		else if (!strcmp(argv[i], "-m"))
+		{
+			mode = atoi(argv[++i]);
+			if(i == argc)
+			{
+				printf(RED "Error : \"-m\" expects a mode but nothing was found !\n" BLACK);
 				exit(1);
 			}
 		}
@@ -101,11 +125,12 @@ int main(int argc, char* argv[])
 
 		else if (!strcmp(argv[i], "-v"))
 		{
-			printf("GBZ80 Aid\n");
-			printf("Version 1.2\n\n");
-			printf("Created by KernelEquinox\n");
+			printf(RED "PKMNRBY-code-converter\n" BLACK);
+			printf("Version 1.3\n\n");
+			printf("tweaked by diabl0w\n");
+			printf("Originally Created by KernelEquinox\n");
 			printf("Contributions by ISSOtm\n\n");
-			printf("Homepage : http://github.com/KernelEquinox/8F-Helper/\n\n");
+			printf(BLUE "Original Homepage : http://github.com/KernelEquinox/8F-Helper/\n\n" BLACK);
 			exit(0);
 		}
 
@@ -113,13 +138,13 @@ int main(int argc, char* argv[])
 		{
 			if (i++ == argc)
 			{
-				printf("Error : \"-ofs\" expects an offset but nothing was found !\n");
+				printf(RED "Error : \"-ofs\" expects an offset but nothing was found !\n" BLACK);
 				exit(1);
 			}
 			
 			if (!sscanf(argv[i], "%4X", &print_offset))
 			{
-				printf("Error : \'-ofs\" expects an hexadecimal offset (ie. D322 or 1f49)\n");
+				printf(RED "Error : \'-ofs\" expects an hexadecimal offset (ie. D322 or 1f49)\n" BLACK);
 				exit(1);
 			}
 		}
@@ -128,62 +153,45 @@ int main(int argc, char* argv[])
 			show_warnings = 0;
 
 		else
-			input = argv[i];
+			data = argv[i];
 	}
-
 	// Set the current offset to the specified offset
 	cur_offset = print_offset;
 
-	// Default to asm if no format was selected
-	if (!format)
-		format = "asm";
+	// Set safe defaults for values not provided
+	if (!mode) mode = 0;
+	if (!input) input = "hex";
+	if (!output) output = "hex";
 
 	// Allocate space for the hex string
 	hex_string = calloc(hex_size, sizeof(char));
 
-	// Parse file as input
-	if (file_mode)
-	{
-		FILE* file = fopen(filename, "r");
-		
-		if(!file)
-		{
-			printf("Error : specified file \"%s\" does not exist !\n", filename);
-			exit(1);
-		}
-		
-		char line[256];
-		while (fgets(line, sizeof(line), file))
-			asm_to_hex(line);
-		
+	if (file_mode) {
+		get_file_data(filename, input, mode);
+	}
+	else if (!strcmp(input, "hex")) {
+		hex_string = data;
+	}
+	else if (!strcmp(input, "asm")) {
+		asm_to_hex(data, mode);
 		uppercase(hex_string);
-		input = hex_string;
-		
-		fclose(file);
 	}
 
 	// Reset the current offset, since it was probably modified
 	cur_offset = print_offset;
-
-	// Print results
-	if (!strcmp(format, "hex"))
-	{
-		if (!file_mode)
-			asm_to_hex(input);
-		uppercase(hex_string);
-		printf("\nMachine code: %s\n", hex_string);
-	}
-	else if (!strcmp(format, "gen1"))
-		hex_to_gen(input, 1);
-	else if (!strcmp(format, "gen2"))
-		hex_to_gen(input, 2);
-	else if (!strcmp(format, "joy"))
-		hex_to_joy(input);
-	else if (!strcmp(format, "bgb"))
-		hex_to_asm(input, 1);
-	else
-		hex_to_asm(input, 0);
 	
+	// Print results
+	if (!strcmp(output, "item"))
+		hex_to_item(hex_string);
+	else if (!strcmp(output, "joy"))
+		hex_to_joy(hex_string);
+	else if (!strcmp(output, "bgb"))
+		hex_to_asm(hex_string, 1);
+	else if (!strcmp(output, "asm"))
+		hex_to_asm(hex_string, 0);
+	else {
+		printf(BLUE "\nMachine code: " BLACK "%s\n", hex_string);	
+	}
 	printf("\n");
 	return 0;
 }
@@ -195,19 +203,19 @@ void usage(char *str)
 	printf("Usage: %s [options] [hex]\n\n", str);
 	printf("Options:\n");
 	printf("  -f file      File mode (read input from file)\n");
+	printf("  -i format    Input is hex or asm (required)\n");
 	printf("  -o format    Display output in a specific format\n");
 	printf("  -ofs offset  Specify memory offset to display in asm format.\n");
-	printf("                 (Ignored in other formats)\n");
+	printf("                  (Ignored in other formats)\n");
 	printf("  -w           Disable item warning messages\n");
 	printf("  -h           Print this help message and exit\n");
 	printf("  -v           Print version information and exit\n\n");
-	printf("Formats:\n");
+	printf("Output Formats:\n");
 	printf("  asm          GB-Z80 assembly language\n");
 	printf("  bgb          BGB-style assembly language\n");
 	printf("  hex          Hexadecimal machine code format\n");
-	printf("  joy          Joypad values\n");
-	printf("  gen1         R/B/Y item codes for use with ACE\n");
-	printf("  gen2         G/S/C item codes for use with ACE\n\n");
+	printf("  joy          Joypad values (http://forums.glitchcity.info/index.php?topic=7744.0)\n");
+	printf("  items        R/B/Y item codes for use with ACE\n");
 	printf("Examples:\n");
 	printf("  %s EA14D7C9\n", str);
 	printf("  %s -o asm -f bgb_mem.dump\n", str);
@@ -218,6 +226,31 @@ void usage(char *str)
 }
 
 
+// Parse file as input
+void get_file_data(char* filename, char* input, int mode)
+{
+	FILE* file = fopen(filename, "r");
+	
+	if(!file)
+	{
+		printf(RED "Error : specified file \"%s\" does not exist !\n" BLACK, filename);
+		exit(1);
+	}
+	
+	char line[256];
+	if (!strcmp(input, "hex")) {
+		hex_string = realloc(hex_string, 256);
+		fgets(hex_string, sizeof(hex_string), file);
+		uppercase(hex_string);
+	}
+	else if (!strcmp(input, "asm")) {
+		while (fgets(line, sizeof(line), file))
+			asm_to_hex(line, mode);
+		uppercase(hex_string);
+	}
+	
+	fclose(file);
+}
 // Removes all spaces from the string
 void strip_spaces(char *str)
 {
@@ -338,7 +371,7 @@ char* op2hex(char *opcode, char *param, char *args)
 		if(!parenthesis)
 		{
 			// Please, be consistent.
-			printf("Couldn't parse [%s %s] on line %d\n", opcode, param, line_num);
+			printf(RED "Couldn't parse [%s %s] on line %d\n" BLACK, opcode, param, line_num);
 			exit(1);
 		}
 		*parenthesis = ')';
@@ -370,7 +403,7 @@ char* op2hex(char *opcode, char *param, char *args)
 			}
 
 	// Ollie into the sun if no match
-	printf("Couldn't parse [%s %s] on line %d\n", opcode, param, line_num);
+	printf(RED "Couldn't parse [%s %s] on line %d\n" BLACK, opcode, param, line_num);
 	exit(1);
 }
 
@@ -410,7 +443,7 @@ void hex_to_asm(char *str, int bgb)
 	// Translate the hex string into a byte array
 	ascii2hex(str, len);
 
-	printf("\n%sgbz80 Assembly:\n\n", (bgb ? "BGB " : ""));
+	printf(BLUE "\n%sgbz80 Assembly:\n\n" BLACK, (bgb ? "BGB " : ""));
 
 	// Loop through each opcode
 	for (int i = 0; i < len;)
@@ -521,7 +554,7 @@ void hex_to_asm(char *str, int bgb)
 }
 
 
-void asm_to_hex(char *str)
+void asm_to_hex(char *str, int alternate)
 {
 	int i = 0;
 	int len = 0;
@@ -593,7 +626,7 @@ void asm_to_hex(char *str)
 	// Get hex equivalent of instruction
 	char *cur_hex = op2hex(opcode, param, args);
 	int hex_value = (int)strtol(cur_hex, NULL, 16);
-	if (cur_offset % 2 == 0 && strlen(cur_hex) / 2 == 1 && (hex_value < 90 || hex_value > 126)) {
+	if (alternate == 1 && cur_offset % 2 == 0 && strlen(cur_hex) / 2 == 1 && (hex_value < 90 || hex_value > 126)) {
 		// Allocate memory for a new string with enough space for the additional byte
     		cur_hex = realloc(cur_hex, 5 * sizeof(char));
     		// Shift the string to the right to make space for "00"
@@ -601,7 +634,6 @@ void asm_to_hex(char *str)
     		// Prepend "00" to cur_hex
     		memcpy(cur_hex, "00", 2);
 	}
-	
 	// Resize hex string to hold additional hex values
 	hex_string = realloc(hex_string, (hex_size += strlen(cur_hex)) * sizeof(char));
 
@@ -619,7 +651,7 @@ void asm_to_hex(char *str)
 
 
 // Converts hex string into Gen I items for 8F
-void hex_to_gen(char *str, int gen)
+void hex_to_item(char *str)
 {
 	// Error handler for weird item setups
 	struct Error errors = {0};
@@ -633,8 +665,8 @@ void hex_to_gen(char *str, int gen)
 	unsigned char multi_key_items = 0;
 	unsigned char duplicate_items = 0;
 
-	printf("\nItem            Quantity\n");
-	printf("========================\n");
+	printf(BLUE "\nItem            Quantity\n");
+	printf("========================\n" BLACK);
 
 	for (int i = 0; i < len;)
 	{
@@ -645,7 +677,7 @@ void hex_to_gen(char *str, int gen)
 		int h_cursor = 0;
 		char h = str[i++];
 		char l = str[i++];
-		char *item = (gen == 1 ? gen1_items[h][l] : gen2_items[h][l]);
+		char *item = gen1_items[h][l];
 		char *quantity = calloc(4, sizeof(char));
 		unsigned char conversion = 0;
 
@@ -670,11 +702,11 @@ void hex_to_gen(char *str, int gen)
 		printf("x%s\n", quantity);
 
 		// [Error] Key items with 2+ quantity
-		if ((gen == 1 ? gen1_key_items[h][l] : gen2_key_items[h][l]))
+		if (gen1_key_items[h][l])
 			if (conversion && conversion != 1)
 				errors.key_quantity = 1;
 		// [Error] Invalid or glitch items
-		if ((gen == 1 ? gen1_glitch_items[h][l] : gen2_glitch_items[h][l]))
+		if (gen1_glitch_items[h][l])
 			errors.glitches = 1;
 		// [Error] Duplicate item stacks
 		if (seen_items[h][l] == 1)

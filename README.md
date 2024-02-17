@@ -1,20 +1,23 @@
 8F Helper
 =========
 
-A quick and dirty (but fast!) application in C that uses lookup tables to assist in the creation of item lists for use with the 8F item in Pokemon R/B/Y. It's got a small amount of error handling and supports the use of a single label for jumping.
+All credit goes to the original author of [8F Helper](https://github.com/KernelEquinox/8F-Helper/releases/) (KernelEquinox)
+and new features will be implemented soon based off code from [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM)
+I've merely added some tweaks and combined tools, most of the work was already done.
 
-## Download
-You can download the latest version of the 8F Helper on the [releases](https://github.com/KernelEquinox/8F-Helper/releases/) page.
+A quick and dirty (but fast!) application in C that uses lookup tables to assist in the conversion between ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as utilities for translating these codes into various types of setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
 
 ## Usage
 ```
-Usage: gbz80aid [options] [hex]
+Usage: pkmnrby-cc [options] [hex]
 
 Options:
-  -f file      File mode (read input from file)
-  -o format    Display output in a specific format
+  -i format    Specify Input format of your code (hex or asm) (required)
+  -o format    Display output in specificied format (default: hex)
+  -f file      File mode (read input from file) (default: sys.arg)
   -ofs offset  Specify memory offset to display in asm format.
                  (Ignored in other formats)
+  -m mode      See notes below (valid values 0 or 1)
   -w           Disable item warning messages
   -h           Print this help message and exit
   -v           Print version information and exit
@@ -24,15 +27,24 @@ Formats:
   bgb          BGB-style assembly language
   hex          Hexadecimal machine code format
   joy          Joypad values
-  gen1         R/B/Y item codes for use with ACE
-  gen2         G/S/C item codes for use with ACE
+  items        R/B/Y item codes for use with ACE
+*TODO:* add TimoVM's Nickwriter
+
+Modes:
+This is specific to the item output format.
+Mode 0 will do normal code -> item conversion
+Mode 1 will replace as many instances of the code as possible
+with `j. xQQ` since in expanded inventory you will have plenty
+of those available. It does so by adding `nop` instructions to your code.
+This will reduce the number of unique items needed, and save time
+hunting them down.
 
 Examples:
-  gbz80aid EA14D7C9
-  gbz80aid -o asm -f bgb_mem.dump
-  gbz80aid -o hex -f zzazz.asm
-  gbz80aid -o gen1 0E1626642EBB4140CDD635C9
-  gbz80aid -o gen2 -f coin_case.asm
+  pkmnrby-cc -o asm EA14D7C9
+  pkmnrby-cc -i hex -o asm -f bgb_mem.dump
+  pkmnrby-cc -i asm -o hex -f zzazz.asm
+  pkmnrby-cc -i hex -o items 0E1626642EBB4140CDD635C9
+  pkmnrby-cc -i asm -o items -f coin_case.asm
 ```
 
 ## Examples
@@ -59,12 +71,12 @@ ret              ; Continue normal execution
 ```
 ### Program outputs
 ```
-root@gbdev:~# gbz80aid -o hex -f test_code.asm
+root@gbdev:~# pkmnrby-cc -i asm -o hex -f test_code.asm
 
 Machine code: F33D3C0438FB26FF04AD3E200C771001C9
 ```
 ```
-root@gbdev:~# gbz80aid F33D3C0438FB26FF04AD3E200C771001C9
+root@gbdev:~# pkmnrby-cc -o asm F33D3C0438FB26FF04AD3E200C771001C9
 
 gbz80 Assembly:
 
@@ -83,7 +95,7 @@ gbz80 Assembly:
   10  C9               ret
 ```
 ```
-root@gbdev:~# gbz80aid -o gen1 -f test_code.asm
+root@gbdev:~# pkmnrby-cc -o gen1 -f test_code.asm
 
 Item            Quantity
 ========================
@@ -100,5 +112,4 @@ TM01            xAny
 
 ## Notes
 I've opted to use `10 01` as the `STOP` opcode instead of the correct `10 00`. This is because it's much easier to get 1 of an item rather than 0 of an item. In all tests, the `STOP` instruction executes normally even with a non-zero argument.
-
 
