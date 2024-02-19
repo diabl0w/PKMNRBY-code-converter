@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "pkmnrby-cc.h"
-
+#include "nick-cc.c"
 
 void usage(char*);
 void strip_spaces(char*);
@@ -179,10 +179,17 @@ int main(int argc, char* argv[])
 
 	// Reset the current offset, since it was probably modified
 	cur_offset = print_offset;
+
+	if(strlen(hex_string) %2 != 0) {
+		printf(RED "Error : Something went wrong, Hex code should be even in lenght, but odd detected\n" BLACK);
+		exit(1);
+	}
 	
 	// Print results
 	if (!strcmp(output, "item"))
 		hex_to_item(hex_string);
+	else if (!strcmp(output, "nick"))
+		hex_to_nick(hex_string);
 	else if (!strcmp(output, "joy"))
 		hex_to_joy(hex_string);
 	else if (!strcmp(output, "bgb"))
@@ -626,6 +633,7 @@ void asm_to_hex(char *str, int alternate)
 	// Get hex equivalent of instruction
 	char *cur_hex = op2hex(opcode, param, args);
 	int hex_value = (int)strtol(cur_hex, NULL, 16);
+	//Detect alternative mode where we prioritize j. xQQ items
 	if (alternate == 1 && cur_offset % 2 == 0 && strlen(cur_hex) / 2 == 1 && (hex_value < 90 || hex_value > 126)) {
 		// Allocate memory for a new string with enough space for the additional byte
     		cur_hex = realloc(cur_hex, 5 * sizeof(char));
