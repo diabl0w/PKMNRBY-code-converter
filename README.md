@@ -8,21 +8,22 @@ Warning: I am not really a programmer, or C programmer for that matter, but I kn
 
 A quick and dirty (but fast!) application written in C which is able to convert ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as translate these codes into various setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
 
-## Supports the following formats:
-  asm          GB-Z80 assembly language
-  bgb          BGB-style assembly language
-  hex          Hexadecimal machine code format
-  joy          Joypad values
-  items        R/B/Y item codes for use with ACE
-  nick         for used with TimoVM's Nickwriter
+### Supports the following formats:
+  - asm - GB-Z80 assembly language
+  - bgb - BGB-style assembly language
+  - hex - Hexadecimal machine code format
+  - joy - Joypad values
+  - items - R/B/Y item codes for use with ACE
+  - nick - for use with TimoVM's Nickwriter
 
-## Item format modes:
+### Item format modes:
 This is specific to the item output format.
   - Mode 0 will do normal code -> item conversion
   - Mode 1 will replace as many instances of the code as possible with `j. xQQ`
-Many modern ACE setups start off with an expanded inventory where j x00 items are plentiful. By utilizing these free items, it will reduce the number of unique items that need to be obtained. This is accomplished by adding `nop` instructions to the input code in, places where it will have no detrimental effect, in order to offset the current address to a "quantity" slot.
 
-## Usage
+Many modern ACE setups start off with an expanded inventory where `j. x00` items are plentiful. By utilizing these free items, it will reduce the number of unique items that need to be obtained. This is accomplished by adding `nop` instructions to the input code in, places where it will have no detrimental effect, in order to offset the current address to a "quantity" slot.
+
+### Usage
 ```
 Usage: pkmnrby-cc [options] [hex]
 
@@ -62,7 +63,7 @@ Examples:
   pkmnrby-cc -i asm -o items -f coin_case.asm
 ```
 
-## Examples
+### Examples
 test_code.asm:
 ```asm
 di               ; Kill all interrupts
@@ -125,6 +126,6 @@ Full Restore    x1
 TM01            xAny
 ```
 
-## Notes
+### Notes
 I've opted to use `10 01` as the `STOP` opcode instead of the correct `10 00`. This is because it's much easier to get 1 of an item rather than 0 of an item. In all tests, the `STOP` instruction executes normally even with a non-zero argument.
 
