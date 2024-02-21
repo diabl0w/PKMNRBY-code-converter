@@ -1,10 +1,26 @@
 PKMNRBY-code-converter
 ======================
 All credit goes to the original author of [8F Helper](https://github.com/KernelEquinox/8F-Helper/releases/) (KernelEquinox)
-and new features will be implemented soon based off code from [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM)
-I've merely added some tweaks and combined tools, most of the work was already done.
+as well as [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM) who provided the logic for additional features that I've added.
 
-A quick and dirty (but fast!) application in C that uses lookup tables to assist in the conversion between ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as utilities for translating these codes into various types of setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
+I've merely added some tweaks to the original, and reimplemented the Nickname Generator in C to be included in this all-in-one tool..
+Warning: I am not really a programmer, or C programmer for that matter, but I know enough (I think) :D
+
+A quick and dirty (but fast!) application written in C which is able to convert ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as translate these codes into various setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
+
+## Supports the following formats:
+  asm          GB-Z80 assembly language
+  bgb          BGB-style assembly language
+  hex          Hexadecimal machine code format
+  joy          Joypad values
+  items        R/B/Y item codes for use with ACE
+  nick         for used with TimoVM's Nickwriter
+
+## Item format modes:
+This is specific to the item output format.
+  - Mode 0 will do normal code -> item conversion
+  - Mode 1 will replace as many instances of the code as possible with `j. xQQ`
+Many modern ACE setups start off with an expanded inventory where j x00 items are plentiful. By utilizing these free items, it will reduce the number of unique items that need to be obtained. This is accomplished by adding `nop` instructions to the input code in, places where it will have no detrimental effect, in order to offset the current address to a "quantity" slot.
 
 ## Usage
 ```
@@ -27,7 +43,7 @@ Formats:
   hex          Hexadecimal machine code format
   joy          Joypad values
   items        R/B/Y item codes for use with ACE
-*TODO:* add TimoVM's Nickwriter
+  nick         for used with TimoVM's Nickwriter
 
 Modes:
 This is specific to the item output format.

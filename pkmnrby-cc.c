@@ -214,6 +214,7 @@ void usage(char *str)
 	printf("  -o format    Display output in a specific format\n");
 	printf("  -ofs offset  Specify memory offset to display in asm format.\n");
 	printf("                  (Ignored in other formats)\n");
+	printf("  -m           change the processing mode for item conversion\n");
 	printf("  -w           Disable item warning messages\n");
 	printf("  -h           Print this help message and exit\n");
 	printf("  -v           Print version information and exit\n\n");
@@ -221,8 +222,9 @@ void usage(char *str)
 	printf("  asm          GB-Z80 assembly language\n");
 	printf("  bgb          BGB-style assembly language\n");
 	printf("  hex          Hexadecimal machine code format\n");
+	printf("  nick         Generate Nickname writer codes\n");
 	printf("  joy          Joypad values (http://forums.glitchcity.info/index.php?topic=7744.0)\n");
-	printf("  items        R/B/Y item codes for use with ACE\n");
+	printf("  item        R/B/Y item codes for use with ACE\n");
 	printf("Examples:\n");
 	printf("  %s EA14D7C9\n", str);
 	printf("  %s -o asm -f bgb_mem.dump\n", str);
