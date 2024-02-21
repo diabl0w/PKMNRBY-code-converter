@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "pkmnrby-cc.h"
 #include "nick-cc.c"
 
@@ -17,6 +18,7 @@ void hex_to_asm(char*, int);
 void asm_to_hex(char*, int);
 void hex_to_item(char*);
 void hex_to_joy(char*);
+void hex_to_nick(char*);
 void get_file_data(char*, char*, int);
 
 
@@ -47,7 +49,7 @@ struct Label *label;
 // File line offset
 int line_num = 1;
 
-// Read 6 chars at a time
+// Read 6 chars at a time -- from original -- Not sure what this means?
 int hex_size = 1;
 char *hex_string;
 
@@ -163,7 +165,7 @@ int main(int argc, char* argv[])
 	if (!input) input = "hex";
 	if (!output) output = "hex";
 
-	// Allocate space for the hex string
+	// Allocate space for the hex string comming from stdin
 	hex_string = calloc(hex_size, sizeof(char));
 
 	if (file_mode) {
@@ -171,12 +173,12 @@ int main(int argc, char* argv[])
 	}
 	else if (!strcmp(input, "hex")) {
 		hex_string = data;
+		uppercase(hex_string);
 	}
 	else if (!strcmp(input, "asm")) {
 		asm_to_hex(data, mode);
 		uppercase(hex_string);
 	}
-
 	// Reset the current offset, since it was probably modified
 	cur_offset = print_offset;
 
@@ -248,8 +250,16 @@ void get_file_data(char* filename, char* input, int mode)
 	
 	char line[256];
 	if (!strcmp(input, "hex")) {
-		hex_string = realloc(hex_string, 256);
-		fgets(hex_string, sizeof(hex_string), file);
+		char character;
+		int length = 1;
+		while ((character = fgetc(file)) != EOF) {
+        		if (!isspace(character)) {
+				hex_string = (char *)realloc(hex_string, length * sizeof(char)); // Reallocate memory for hex_string
+				hex_string[length - 1] = character;
+				length ++;
+			}
+		}
+		hex_string[length - 1] = '\0';
 		uppercase(hex_string);
 	}
 	else if (!strcmp(input, "asm")) {
