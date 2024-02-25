@@ -113,6 +113,10 @@ char* normalize_param(char *str)
 	do
 		if (*str == '$')
 		{
+			if (strlen(str) < 2) {
+				fprintf(stderr, "Couldn't parse instruction #%d\nMissing arguement?\n", data.asm_code.line);
+				exit(1);
+			}
 			hex[0] = str[1];
 			hex[1] = str[2];
 			str[1] = 'x';
@@ -193,8 +197,7 @@ void jump2addr(char *param, int type)
 			param[0] = '$';
 			if (type) {
 				if (data.asm_code.label[i].address > data.cur_offset) {
-					sprintf(param + 1, "%02X", (data.asm_code.label[i].address - data.cur_offset));
-					printf("Param 1: %s\n", param);
+					sprintf(param + 1, "%02X", (data.asm_code.label[i].address - data.cur_offset - 2));
 				} else {
 					sprintf(param + 1, "%02X", (data.asm_code.label[i].address - data.cur_offset - 2) & 0xFF);
 				}
@@ -568,9 +571,9 @@ void get_file_data(char* filename, char* format) {
 		data.hex.code = (char *)malloc(length * sizeof(char));
 		while ((c = fgetc(file)) != EOF) {
 			if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
-				data.hex.code = (char *)realloc(data.hex.code, length * sizeof(char));
 				data.hex.code[length - 1] = c;
 				length ++;
+				data.hex.code = (char *)realloc(data.hex.code, length * sizeof(char));
 			}
 		}
 		data.hex.code[length - 1] = '\0';
