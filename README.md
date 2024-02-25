@@ -1,50 +1,36 @@
 PKMNRBY-code-converter
 ======================
-All credit goes to the original author of [8F Helper](https://github.com/KernelEquinox/8F-Helper/releases/) (KernelEquinox)
-as well as [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM) who provided the logic for additional features that I've added.
+Original framework this is derived from: [8F Helper](https://github.com/KernelEquinox/8F-Helper/releases/) (KernelEquinox)
+Logic for Nickwriter function [Nickname Writer Code Generator](https://scotteh.me/ace/nick/) (Scott Maxwell & TimoVM)
 
-I've merely added some tweaks to the original, and reimplemented the Nickname Generator in C to be included in this all-in-one tool..
-Warning: I am not really a programmer, or C programmer for that matter, but I know enough (I think) :D
-
-A quick and dirty (but fast!) application written in C which is able to convert ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as translate these codes into various setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
+All-in-one conversion tool application written in C which is able to convert ASM & HEX machine code for the Sharp SM83 (gbz80) found in the Nintendo Gameboy, as well as translate these codes into various setups used for arbitrary code execution (ACE) in Gen 1 - Pokemon R/B/Y.
 
 ### Supports the following formats:
   - asm - GB-Z80 assembly language
-  - bgb - BGB-style assembly language
   - hex - Hexadecimal machine code format
   - joy - Joypad values
-  - items - R/B/Y item codes for use with ACE
-  - nick - for use with TimoVM's Nickwriter
+  - item - R/B/Y item codes for use with ACE
+  - nickname - for use with TimoVM's Nickwriter
 
-### Item format modes:
-This is specific to the item output format.
-  - Mode 0 will do normal code -> item conversion
-  - Mode 1 will replace as many instances of the code as possible with `j. xQQ`
-
-Many modern ACE setups start off with an expanded inventory where `j. x00` items are plentiful. By utilizing these free items, it will reduce the number of unique items that need to be obtained. This is accomplished by adding `nop` instructions to the input code in, places where it will have no detrimental effect, in order to offset the current address to a "quantity" slot.
+### Smart Item Conversion
+Many modern ACE setups start off with an expanded inventory where `j. x00` items are plentiful. By utilizing these free items, it will reduce the number of unique items that need to be obtained. This is accomplished by adding `nop` instructions to the input code, in places where it will have no detrimental effect, in order to offset the current address to a "quantity" slot. This is avoided where a conversion will be a "friendly" item like Ultra Balls/Master Balls which are easy to obtain
 
 ### Usage
 ```
 Usage: pkmnrby-cc [options] [hex]
 
 Options:
-  -i format    Specify Input format of your code (hex or asm) (required)
   -o format    Display output in specificied format (default: hex)
-  -f file      File mode (read input from file) (default: sys.arg)
-  -ofs offset  Specify memory offset to display in asm format.
-                 (Ignored in other formats)
-  -m mode      See notes below (valid values 0 or 1)
-  -w           Disable item warning messages
+  -org offset  Specify memory offset for start of code
   -h           Print this help message and exit
   -v           Print version information and exit
 
 Formats:
   asm          GB-Z80 assembly language
-  bgb          BGB-style assembly language
   hex          Hexadecimal machine code format
   joy          Joypad values
-  items        R/B/Y item codes for use with ACE
-  nick         for used with TimoVM's Nickwriter
+  item        R/B/Y item codes for use with ACE
+  nickname         for used with TimoVM's Nickwriter
 
 Modes:
 This is specific to the item output format.
@@ -56,16 +42,18 @@ This will reduce the number of unique items needed, and save time
 hunting them down.
 
 Examples:
-  pkmnrby-cc -o asm EA14D7C9
-  pkmnrby-cc -i hex -o asm -f bgb_mem.dump
-  pkmnrby-cc -i asm -o hex -f zzazz.asm
-  pkmnrby-cc -i hex -o items 0E1626642EBB4140CDD635C9
-  pkmnrby-cc -i asm -o items -f coin_case.asm
+  pkmnrby-cc EA14D7C9
+  pkmnrby-cc -o asm bgb_mem.dump
+  pkmnrby-cc zzazz.asm
+  pkmnrby-cc -o item 0E1626642EBB4140CDD635C9
+  pkmnrby-cc -o nickname coin_case.asm
 ```
 
 ### Examples
 test_code.asm:
-```asm
+```
+.org $D322
+
 di               ; Kill all interrupts
 
 .testJump        ; Just to show the label/jump processing
@@ -85,33 +73,116 @@ stop
 
 ret              ; Continue normal execution 
 ```
-### Program outputs
+Program outputs:
 ```
-root@gbdev:~# pkmnrby-cc -i asm -o hex -f test_code.asm
+root@gbdev:~# pkmnrby-cc test_code.asm
 
-Machine code: F33D3C0438FB26FF04AD3E200C771001C9
-```
-```
-root@gbdev:~# pkmnrby-cc -o asm F33D3C0438FB26FF04AD3E200C771001C9
+**************************************************************
+ ____  _  __ _      _      ____  ____ ___  _
+/  __\/ |/ // \__/|/ \  /|/  __\/  __\\  \//
+|  \/||   / | |\/||| |\ |||  \/|| | // \  /
+|  __/|   \ | |  ||| | \|||    /| |_\\ / /
+\_/   \_|\_\\_/  \|\_/  \|\_/\_\\____//_/
+ ____  ____  ____  _____   
+/   _\/  _ \/  _ \/  __/
+|  /  | / \|| | \||  \ _____
+|  \_ | \_/|| |_/||  /_\____\
+\____/\____/\____/\____\
+____  ____  _      _     _____ ____  _____  _____ ____
+/   _\/  _ \/ \  /|/ \ |\/  __//  __\/__ __\/  __//  __\ 
+|  /  | / \|| |\ ||| | //|  \  |  \/|  / \  |  \  |  \/|
+|  \_ | \_/|| | \||| \// |  /_ |    /  | |  |  /_ |    /
+\____/\____/\_/  \|\__/  \____\\_/\_\  \_/  \____\\_/\_\ 
 
-gbz80 Assembly:
+**************************************************************
+Input format detected as asm!
 
-   0  F3               di
-   1  3D               dec  a
-   2  3C               inc  a
-   3  04               inc  b
-   4  38 FB            jr   c,$FB
-   6  26 FF            ld   h,$FF
-   8  04               inc  b
-   9  AD               xor  l
-   A  3E 20            ld   a,$20
-   C  0C               inc  c
-   D  77               ld   (hl),a
-   E  10 01            stop
-  10  C9               ret
-```
-```
-root@gbdev:~# pkmnrby-cc -o gen1 -f test_code.asm
+*********************************************************
+Assembly Code:
+.org D322
+
+di               ; Kill all interrupts
+
+.testJump        ; Just to show the label/jump processing
+dec a
+inc a
+inc b
+jr c, testJump   ; Relative jump to label
+
+ld h, $FF        ; Set hl to $FF00
+inc b
+xor l
+
+ld a, $20        ; Enter STOP mode until D-pad is pressed
+inc c
+ld (hl), a
+stop
+
+ret              ; Continue normal execution 
+
+*********************************************************
+Full Joypad Writer
+==================
+
+Joypad Values:
+A
+DOWN UP LEFT RIGHT B A A
+LEFT RIGHT START SELECT A A
+LEFT RIGHT START SELECT SELECT
+DOWN SELECT DOWN DOWN
+LEFT RIGHT START START
+DOWN UP LEFT RIGHT START B A A
+LEFT SELECT B B
+DOWN UP LEFT RIGHT START SELECT B A A
+SELECT SELECT
+DOWN LEFT START SELECT A A
+LEFT RIGHT START SELECT B B
+LEFT LEFT
+START SELECT SELECT
+UP LEFT RIGHT SELECT B A A
+RIGHT RIGHT
+A A
+DOWN UP START A A
+START + SELECT
+
+Total number of button presses: 85
+
+
+*********************************************************
+Nicknames for TimOS' Nickname Writer
+====================================
+
+Nickname 1 (36 keypresses, checksum: 0x28):	"jbl!l?saj?"
+Nickname 2 (24 keypresses, checksum: 0x51):	"jjywvVmmMV"
+Nickname 3 (33 keypresses, checksum: 0x71):	"g.yqz([Mn]ttk"
+Nickname 4 (11 keypresses, checksum: 0x4A):	"irRh"
+
+Total Keypresses: 108
+
+
+*********************************************************
+Smart Item List:
+
+Item            Quantity
+========================
+TM43            x61
+[item 0x00]     x60
+Poke Ball       x56
+TM50            x38
+CANCEL (TM55)   x4
+[item 0xAD]     x62
+Fire Stone      x12
+[item 0x00]     x119
+Full Restore    x1
+[item 0x00]     x201
+
+
+-- WARNING! --
+ * Duplicate item stacks detected!
+ * Glitch items detected!
+
+*********************************************************
+Standard Item List:
 
 Item            Quantity
 ========================
@@ -124,6 +195,9 @@ Lemonade        x32
 Burn Heal       x119
 Full Restore    x1
 TM01            xAny
+
+*********************************************************
+Machine code: F33D3C0438FB26FF04AD3E200C771001C9
 ```
 
 ### Notes

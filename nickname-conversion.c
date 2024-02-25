@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "defines.h"
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 // Define the structure for characters set entry
@@ -79,11 +77,11 @@ CharSetEntry charSet[] = {
 {"?", 0xE6, 1, 4, 0}, 
 {"!", 0xE7, 2, 4, 0}, 
 {".", 0xF2, 6, 4, 0}, 
-{"[male]", 0xEF, 3, 4, 0}, 
+{"♂", 0xEF, 3, 4, 0}, 
 {"*", 0xF1, 0, 3, 0}, 
 {"/", 0xF3, 5, 4, 0}, 
 {",", 0xF4, 7, 4, 0}, 
-{"[female]", 0xF5, 4, 4, 0}
+{"♀", 0xF5, 4, 4, 0}
 };
 
 int charSetSize = sizeof(charSet) / sizeof(charSet[0]);
@@ -96,13 +94,13 @@ typedef struct {
 encodedSet **encodedSetDict;
 
 typedef struct {
-	unsigned char nibU;
-	unsigned char nibL;
+	char nibU;
+	char nibL;
 } screenState;
 
 typedef struct {
-	char nibU;
-	char nibL;
+	unsigned char nibU;
+	unsigned char nibL;
 	int dist;
 	int hex;
 	screenState screen;
@@ -304,7 +302,7 @@ nameSetBundle deepCopy(nameSetBundle source) {
 }
 
 matchSetBundle getCandidates(int iHex) {
-	unsigned char m = 0;
+	char m = 0;
     	for (int i = 0; i < charSetSize; ++i) {
     		for (int j = 0; j < charSetSize; ++j) {
 			if (encodedSetDict[i][j].hex == iHex) {
@@ -335,8 +333,11 @@ matchSetBundle getCandidates(int iHex) {
 void hex_to_nick(char *sCode) {
 	encodedSet** encodedSetDict = createEncodedSetDict();
 	int sCode_len = strlen(sCode);
-	unsigned char iName_count = (sCode_len + 9) / 10;
+	char iName_count = (sCode_len + 9) / 10;
 	char bytes[iName_count];
+	int total_keypress = 0;
+	printf(BLUE"Nicknames for TimOS' Nickname Writer\n");
+	printf("====================================\n\n"BLACK);
 	for (int n=0; n < iName_count; n++) {
 		if (sCode_len - ((n + 1) * 10) > -1) {
 			bytes[n] = 5;
@@ -371,6 +372,8 @@ void hex_to_nick(char *sCode) {
 				index = x;
 			}
 		}
-		printf("Nickname %d (%d keypresses, Checksum: %X):\t\"%s\"\n", n + 1, name_draft.namedata[index].keypress, name_draft.namedata[index].checksum, name_draft.namedata[index].name); 
+		total_keypress = total_keypress + name_draft.namedata[index].keypress + 1; // +1 for enter on each nickname
+		printf("Nickname %d (%d keypresses, checksum: 0x%02hhX):\t\"%s\"\n", n + 1, name_draft.namedata[index].keypress, name_draft.namedata[index].checksum, name_draft.namedata[index].name); 
 	}
+	printf("\nTotal Keypresses: %d\n\n", total_keypress);
 }

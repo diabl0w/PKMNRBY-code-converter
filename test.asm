@@ -1,11 +1,20 @@
-ld l,$6E
-ld [hl], $36
-ld a,$D3
-ld ($D36F),a
+.org D322
+
+di               ; Kill all interrupts
+
+.testJump        ; Just to show the label/jump processing
+dec a
+inc a
 inc b
-ld c,$1c
-ld h,$78
-ld l,$48 ; 1c:7848: SaveSAVtoSRAM
-ld b,c
-call $35d6 ; BankSwitch
-jp nc,$1f49 ; SoftReset
+jr c, testJump   ; Relative jump to label
+
+ld h, $FF        ; Set hl to $FF00
+inc b
+xor l
+
+ld a, $20        ; Enter STOP mode until D-pad is pressed
+inc c
+ld (hl), a
+stop
+
+ret              ; Continue normal execution 
