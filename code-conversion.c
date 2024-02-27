@@ -327,13 +327,13 @@ void process_labels(char* str, int alternate) {
 		strip_all_spaces(str);
 		char* orgptr = strstr(str, ".org");
 		if (orgptr) {
-			orgptr += 4;
-			if (orgptr[0] == '$')
+			orgptr = strstr(str, "$");
+			if (orgptr)
 				orgptr++;
-			data.offset = strtol(orgptr, NULL, 16);
-			data.cur_offset = data.offset;
-			data.asm_code.line++;
-			return;
+				data.offset = strtol(orgptr, NULL, 16);
+				data.cur_offset = data.offset;
+				data.asm_code.line++;
+				return;
 		}
 		nullify_char(str, ':'); //for the "MyLabel:" type labelling
 		data.asm_code.label = realloc(data.asm_code.label, (data.asm_code.jmp_num + 1) * sizeof(Label));
@@ -389,6 +389,16 @@ void process_asm(char* str, int alternate) {
 
 	//Cleanup line for processing
 	standardize_instruction(str);
+	char* orgptr = strstr(str, ".org");
+	if (orgptr) {
+		orgptr = strstr(str, "$");
+		if (orgptr)
+			orgptr++;
+			data.offset = strtol(orgptr, NULL, 16);
+			data.cur_offset = data.offset;
+			data.asm_code.line++;
+			return;
+	}
 	
 	//Line is empty or contains label (no instructions)
 	if (!str[i] || str[i] == '.' || strchr(str, ':')) {
